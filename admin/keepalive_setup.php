@@ -1,9 +1,9 @@
 <?php
-/* Copyright (C) 2020 ATM Consulting <support@atm-consulting.fr>
+/* Copyright (C) 2020	Atm consulting
  *
- * This program is free software: you can redistribute it and/or modify
+ * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ * the Free Software Foundation; either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
@@ -12,67 +12,42 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
 /**
- * 	\file		admin/keepalive.php
- * 	\ingroup	keepalive
- * 	\brief		This file is an example module setup page
- * 				Put some comments here
+ *      \file       keepalive/admin/keepalive_setup.php
+ *		\ingroup    keepalive
+ *		\brief      Page to setup keepalive module
  */
+
 // Dolibarr environment
 $res = @include '../../main.inc.php'; // From htdocs directory
 if (! $res) {
-    $res = @include '../../../main.inc.php'; // From "custom" directory
+	$res = @include '../../../main.inc.php'; // From "custom" directory
 }
 
-// Libraries
-require_once DOL_DOCUMENT_ROOT . '/core/lib/admin.lib.php';
 require_once '../lib/keepalive.lib.php';
-dol_include_once('abricot/includes/lib/admin.lib.php');
+require_once DOL_DOCUMENT_ROOT.'/core/lib/admin.lib.php';
 
-// Translations
-$langs->loadLangs(array('keepalive@keepalive', 'admin', 'other'));
+// Load translation files required by the page
+$langs->loadLangs(array('admin', 'errors', 'other', 'bills'));
 
-// Access control
-if (! $user->admin) {
-    accessforbidden();
-}
+if (! $user->admin) accessforbidden();
 
-// Parameters
 $action = GETPOST('action', 'alpha');
+$value = GETPOST('value', 'alpha');
+$label = GETPOST('label', 'alpha');
+$scandir = GETPOST('scan_dir', 'alpha');
+
 
 /*
  * Actions
  */
-if (preg_match('/set_(.*)/', $action, $reg))
-{
-	$code=$reg[1];
-	if (dolibarr_set_const($db, $code, GETPOST($code), 'chaine', 0, '', $conf->entity) > 0)
-	{
-		header("Location: ".$_SERVER["PHP_SELF"]);
-		exit;
-	}
-	else
-	{
-		dol_print_error($db);
-	}
-}
-	
-if (preg_match('/del_(.*)/', $action, $reg))
-{
-	$code=$reg[1];
-	if (dolibarr_del_const($db, $code, 0) > 0)
-	{
-		Header("Location: ".$_SERVER["PHP_SELF"]);
-		exit;
-	}
-	else
-	{
-		dol_print_error($db);
-	}
-}
+
+include DOL_DOCUMENT_ROOT.'/core/actions_setmoduleoptions.inc.php';
+
+
 
 /*
  * View
@@ -82,52 +57,155 @@ llxHeader('', $langs->trans($page_name));
 
 // Subheader
 $linkback = '<a href="' . DOL_URL_ROOT . '/admin/modules.php">'
-    . $langs->trans("BackToModuleList") . '</a>';
+	. $langs->trans("BackToModuleList") . '</a>';
 print load_fiche_titre($langs->trans($page_name), $linkback);
 
 // Configuration header
 $head = keepaliveAdminPrepareHead();
 dol_fiche_head(
-    $head,
-    'settings',
-    $langs->trans("Module104715Name"),
-    -1,
-    "keepalive@keepalive"
+	$head,
+	'settings',
+	$langs->trans("Module104715Name"),
+	-1,
+	"keepalive@keepalive"
 );
 
-// Setup page goes here
-$form=new Form($db);
-$var=false;
-print '<table class="noborder" width="100%">';
 
 
-if(!function_exists('setup_print_title')){
-    print '<div class="error" >'.$langs->trans('AbricotNeedUpdate').' : <a href="http://wiki.atm-consulting.fr/index.php/Accueil#Abricot" target="_blank"><i class="fa fa-info"></i> Wiki</a></div>';
-    exit;
+/*
+ *  Numbering module
+ */
+
+print '<form method="POST" action="'.$_SERVER['PHP_SELF'].'">';
+if(intval(DOL_VERSION) >= 11){
+	print '<input type="hidden" name="token" value="'.newToken().'">';
 }
 
-setup_print_title("Parameters");
 
-// Example with a yes / no select
-setup_print_on_off('CONSTNAME', $langs->trans('ParamLabel'), 'ParamDesc');
+print '<div class="div-table-responsive-no-min">'; // You can use div-table-responsive-no-min if you dont need reserved height for your table
+print '<table class="noborder centpercent">';
 
-// Example with imput
-setup_print_input_form_part('CONSTNAME', $langs->trans('ParamLabel'));
+print '<tr class="liste_titre">';
+print '<td>'.$langs->trans("Parameter").'</td>';
+print '<td align="center" width="60">'.$langs->trans("Value").'</td>';
+print '<td width="80">&nbsp;</td>';
+print "</tr>\n";
 
-// Example with color
-setup_print_input_form_part('CONSTNAME', $langs->trans('ParamLabel'), 'ParamDesc', array('type'=>'color'), 'input', 'ParamHelp');
-
-// Example with placeholder
-//setup_print_input_form_part('CONSTNAME',$langs->trans('ParamLabel'),'ParamDesc',array('placeholder'=>'http://'),'input','ParamHelp');
-
-// Example with textarea
-//setup_print_input_form_part('CONSTNAME',$langs->trans('ParamLabel'),'ParamDesc',array(),'textarea');
-
+_printOnOff('KEEPALIVE_CONF01', $langs->trans('conf01'));
+//_printInputFormPart('KEEPALIVE_CONF02', $title = false, $desc = '', $metas = array(), $type = 'input', $help = false);
 
 print '</table>';
+print '</div>';
 
-dol_fiche_end(-1);
+print '<br>';
 
+_updateBtn();
+
+print '</form>';
+
+dol_fiche_end();
+
+// End of page
 llxFooter();
-
 $db->close();
+
+/**
+ * Print an update button
+ *
+ * @return void
+ */
+function _updateBtn()
+{
+	global $langs;
+	print '<div class="center">';
+	print '<input type="submit" class="button" value="'.$langs->trans("Save").'">';
+	print '</div>';
+}
+
+/**
+ * Print a On/Off button
+ *
+ * @param string $confkey the conf key
+ * @param bool   $title   Title of conf
+ * @param string $desc    Description
+ *
+ * @return void
+ */
+function _printOnOff($confkey, $title = false, $desc = '')
+{
+	global $langs;
+
+	print '<tr class="oddeven">';
+	print '<td>'.($title?$title:$langs->trans($confkey));
+	if (!empty($desc)) {
+		print '<br><small>'.$langs->trans($desc).'</small>';
+	}
+	print '</td>';
+	print '<td class="center" width="20">&nbsp;</td>';
+	print '<td class="right" width="300">';
+	print ajax_constantonoff($confkey);
+	print '</td></tr>';
+}
+
+
+/**
+ * Print a form part
+ *
+ * @param string $confkey the conf key
+ * @param bool   $title   Title of conf
+ * @param string $desc    Description of
+ * @param array  $metas   html meta
+ * @param string $type    type of input textarea or input
+ * @param bool   $help    help description
+ *
+ * @return void
+ */
+function _printInputFormPart($confkey, $title = false, $desc = '', $metas = array(), $type = 'input', $help = false)
+{
+	global $langs, $conf, $db, $inputCount;
+
+	$inputCount = empty($inputCount)?1:($inputCount+1);
+	$form=new Form($db);
+
+	$defaultMetas = array(
+		'name' => 'value'.$inputCount
+	);
+
+	if ($type!='textarea') {
+		$defaultMetas['type']   = 'text';
+		$defaultMetas['value']  = $conf->global->{$confkey};
+	}
+
+
+	$metas = array_merge($defaultMetas, $metas);
+	$metascompil = '';
+	foreach ($metas as $key => $values) {
+		$metascompil .= ' '.$key.'="'.$values.'" ';
+	}
+
+	print '<tr class="oddeven">';
+	print '<td>';
+
+	if (!empty($help)) {
+		print $form->textwithtooltip(($title?$title:$langs->trans($confkey)), $langs->trans($help), 2, 1, img_help(1, ''));
+	} else {
+		print $title?$title:$langs->trans($confkey);
+	}
+
+	if (!empty($desc)) {
+		print '<br><small>'.$langs->trans($desc).'</small>';
+	}
+
+	print '</td>';
+	print '<td class="center" width="20">&nbsp;</td>';
+	print '<td class="right" width="300">';
+	print '<input type="hidden" name="param'.$inputCount.'" value="'.$confkey.'">';
+
+	print '<input type="hidden" name="action" value="setModuleOptions">';
+	if ($type=='textarea') {
+		print '<textarea '.$metascompil.'  >'.dol_htmlentities($conf->global->{$confkey}).'</textarea>';
+	} else {
+		print '<input '.$metascompil.'  />';
+	}
+	print '</td></tr>';
+}
