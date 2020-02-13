@@ -2,9 +2,14 @@
 header('Content-Type: application/javascript');
 require '../config.php';
 
+$keepAliveRefreshTime = 60000;
+if(!empty($conf->global->KEEPALIVE_REFRESH_TIME)){
+	$keepAliveRefreshTime = abs(intval($conf->global->KEEPALIVE_REFRESH_TIME)) * 1000; // convert second to millisecond
+}
+
 ?>
 
-var preventLogoutRefreshTime = 600000; // every 10 minutes in milliseconds
+var preventLogoutRefreshTime = <?php print $keepAliveRefreshTime; ?>; // every 10 minutes in milliseconds
 window.setInterval( function() {
 	$.ajax({
 		cache: false,
